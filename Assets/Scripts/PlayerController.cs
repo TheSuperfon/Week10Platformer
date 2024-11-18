@@ -7,6 +7,7 @@ public class PlayerController : MonoBehaviour
     Rigidbody2D Rb;
     public float TimeDelay;
     public float TimeGone;
+    public bool FaceRight;
     public enum FacingDirection
     {
         left, right
@@ -16,6 +17,7 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         Rb = GetComponent<Rigidbody2D>();
+        FaceRight = true;
     }
 
     // Update is called once per frame
@@ -31,10 +33,11 @@ public class PlayerController : MonoBehaviour
 
         if (playerInput.x > 0) //when horizontal movement isn't 0 so actually moving
         {
+            FaceRight = true;
             if (TimeGone <= TimeDelay)
             {
                 TimeGone += Time.deltaTime;
-                Debug.Log(TimeGone);
+                //Debug.Log(TimeGone);
             }
             else
             {
@@ -43,10 +46,11 @@ public class PlayerController : MonoBehaviour
         }
         else if (playerInput.x < 0) 
         {
+            FaceRight = false;
             if (TimeGone <= TimeDelay)
             {
                 TimeGone += Time.deltaTime;
-                Debug.Log(TimeGone);
+                //Debug.Log(TimeGone);
             }
             else
             {
@@ -68,7 +72,16 @@ public class PlayerController : MonoBehaviour
 
     public bool IsWalking()
     {
-        return false;
+        if(TimeGone >= TimeDelay)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+
+        
     }
     public bool IsGrounded()
     {
@@ -77,6 +90,14 @@ public class PlayerController : MonoBehaviour
 
     public FacingDirection GetFacingDirection()
     {
-        return FacingDirection.left;
+        if (FaceRight == true)
+        {
+            return FacingDirection.right;
+        }
+        else
+        {
+            return FacingDirection.left;
+        }
+        
     }
 }
