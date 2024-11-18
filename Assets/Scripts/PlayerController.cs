@@ -29,9 +29,9 @@ public class PlayerController : MonoBehaviour
         Vector2 playerInput = new Vector2();
         
 
-        playerInput.x = (Input.GetAxisRaw("Horizontal") * speed);
+        playerInput.x = (Input.GetAxis("Horizontal") * speed);
 
-        if (playerInput.x > 0) //when horizontal movement isn't 0 so actually moving
+        if (playerInput.x > 0) //when horizontal movement isn't 0 so actually moving (right)
         {
             FaceRight = true;
             if (TimeGone <= TimeDelay)
@@ -44,7 +44,7 @@ public class PlayerController : MonoBehaviour
                 MovementUpdate(playerInput);
             }
         }
-        else if (playerInput.x < 0) 
+        else if (playerInput.x < 0) //when horizontal movement isn't 0 so actually moving (left)
         {
             FaceRight = false;
             if (TimeGone <= TimeDelay)
