@@ -1562,6 +1562,8 @@ MonoBehaviour:
   speed: 5
   TimeDelay: 0.01
   TimeGone: 0
+  forceMode: 0
+  JumpForce: 800
   FaceRight: 0
 --- !u!4 &1433354315
 Transform:

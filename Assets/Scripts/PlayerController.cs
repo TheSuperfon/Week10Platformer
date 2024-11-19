@@ -7,6 +7,8 @@ public class PlayerController : MonoBehaviour
     Rigidbody2D Rb;
     public float TimeDelay;
     public float TimeGone;
+    [SerializeField] private ForceMode2D forceMode;
+    public float JumpForce;
     public bool FaceRight;
     public enum FacingDirection
     {
@@ -26,6 +28,8 @@ public class PlayerController : MonoBehaviour
         // The input from the player needs to be determined and
         // then passed in the to the MovementUpdate which should
         // manage the actual movement of the character.
+
+        
         Vector2 playerInput = new Vector2();
         
 
@@ -61,13 +65,20 @@ public class PlayerController : MonoBehaviour
         {
             TimeGone = 0;
         }
+        if (!IsGrounded() && Input.GetButtonDown("Jump"))
+        {
+            Rb.AddForce(Vector2.up * JumpForce, forceMode);
+            
 
-        
+        }
+
+        //Debug.Log(IsGrounded());
+
     }
 
     private void MovementUpdate(Vector2 playerInput)
     {
-        Rb.velocity = playerInput;
+        Rb.velocity = new Vector2(playerInput.x, Rb.velocity.y);
     }
 
     public bool IsWalking()
@@ -85,7 +96,19 @@ public class PlayerController : MonoBehaviour
     }
     public bool IsGrounded()
     {
-        return false;
+        RaycastHit2D GroundInfo = Physics2D.Linecast(transform.position + new Vector3(-0.3f, -0.65f, 0), transform.position + new Vector3(0.3f, -0.65f, 0));
+        Debug.DrawLine(transform.position + new Vector3(-0.3f, -0.65f, 0), transform.position + new Vector3(0.3f, -0.65f, 0), Color.red);
+
+        if (GroundInfo.collider != null)
+        {
+            return false; //actually true
+        }
+        else
+        {
+            return true; //actually false
+        }
+
+        
     }
 
     public FacingDirection GetFacingDirection()
