@@ -16,6 +16,7 @@ public class PlayerController : MonoBehaviour
     float GravityTime = 0;
     float initialYposition = 0;
     bool jump = false;
+    bool towardGround = false;
     public enum FacingDirection
     {
         left, right
@@ -113,27 +114,49 @@ public class PlayerController : MonoBehaviour
 
     private void MovementUpdate(Vector2 playerInput)
     {
-        Debug.Log(jump);
+        //Debug.Log(jump);
         Rb.velocity = new Vector2(playerInput.x, Rb.velocity.y);
 
-        if (Rb.gravityScale <= 0)
+        if (jump == true || towardGround == true)//Rb.gravityScale <= 0)
         {
             
             float Gravity = -2 * ApexHeight / ((ApexTime) * (ApexTime));
             float JumpVelocity = 2 * ApexHeight / (ApexTime);
             //Rb.velocity = new Vector2(Rb.velocity.x, ((1 / 2) * Gravity * (GravityTime * GravityTime) + JumpVelocity * GravityTime + initialYposition));
             Rb.velocity = new Vector2(Rb.velocity.x, (Gravity * GravityTime + JumpVelocity));
-            if (GravityTime >= ApexTime) //Rb.velocity.y >= ApexHeight
+            if (/*jump == true &&*/ (GravityTime >= ApexTime)) //Rb.velocity.y >= ApexHeight
             {
-                GravityTime = 0;
-                Rb.gravityScale = 3;
-                jump = false;
-                Debug.Log("oof");
+                if (!IsGrounded())
+                {
+                    GravityTime = 0;
+                    //Rb.gravityScale = 3;
+                    //Rb.gravityScale = 3f;
+                    jump = false;
+                    //towardGround = true;
+                    //ApexHeight *= -1;
+                }
+
+
             }
             GravityTime += Time.deltaTime;
-
+            /*if (towardGround == true && (GravityTime >= ApexTime)) //Rb.velocity.y >= ApexHeight
+            {
+                GravityTime = 0;
+                //Rb.gravityScale = 3;
+                //Rb.gravityScale = 3f;
+                //jump = false;
+                towardGround = false;
+                ApexHeight *= -1;
+            }*/
         }
-
+        else if (IsGrounded() && jump == false)
+        {
+            Rb.gravityScale = 3;
+        }
+        else
+        {
+            Rb.gravityScale = 0;
+        }
 
 
     }
