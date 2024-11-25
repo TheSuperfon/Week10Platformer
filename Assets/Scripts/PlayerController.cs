@@ -18,6 +18,10 @@ public class PlayerController : MonoBehaviour
     bool jump = false;
     bool towardGround = false;
     public float terminalVelocity;
+    public float CoyoteTimeValue = 0;
+    float CoyoteTimer = 0;
+    bool coyoteGround = false;
+
     public enum FacingDirection
     {
         left, right
@@ -78,7 +82,7 @@ public class PlayerController : MonoBehaviour
                 MovementUpdate(playerInput);
             }
         }
-        if (!IsGrounded() && Input.GetButtonDown("Jump"))
+        if ((!IsGrounded() || coyoteGround == true) && Input.GetButtonDown("Jump"))
         {
             Rb.gravityScale = 0;
             initialYposition = transform.position.y;
@@ -107,7 +111,13 @@ public class PlayerController : MonoBehaviour
         {
             //Rb.gravityScale = 0;
         }
-        
+        if (IsGrounded() && jump == false)
+        {
+            if (Input.GetAxis("Horizontal") == 0)
+            {
+                MovementUpdate(playerInput);
+            }
+        }
 
         //Debug.Log(IsGrounded());
 
@@ -129,12 +139,12 @@ public class PlayerController : MonoBehaviour
             {
                 VerticalChange = -terminalVelocity;
             }
-            else if (VerticalChange > terminalVelocity)
+            /*else if (VerticalChange > terminalVelocity)
             {
                 VerticalChange = terminalVelocity;
-            }
+            }*/
             Rb.velocity = new Vector2(Rb.velocity.x, VerticalChange);
-            Debug.Log(VerticalChange);
+            //Debug.Log(VerticalChange);
             if (/*jump == true &&*/ (GravityTime >= ApexTime)) //Rb.velocity.y >= ApexHeight
             {
                 if (!IsGrounded())
@@ -150,6 +160,7 @@ public class PlayerController : MonoBehaviour
 
             }
             GravityTime += Time.deltaTime;
+            
             /*if (towardGround == true && (GravityTime >= ApexTime)) //Rb.velocity.y >= ApexHeight
             {
                 GravityTime = 0;
@@ -162,11 +173,39 @@ public class PlayerController : MonoBehaviour
         }
         else if (IsGrounded() && jump == false)
         {
-            Rb.gravityScale = 3;
+            if (Rb.gravityScale <= 0)
+            {
+                Debug.Log("why");
+                
+
+                if (CoyoteTimer < CoyoteTimeValue)
+                {
+                    coyoteGround = true;
+                    CoyoteTimer += Time.deltaTime;
+                    
+                }
+                else
+                {
+                    Rb.gravityScale = 3;
+                    CoyoteTimer = 0;
+                    coyoteGround = false;
+                }
+
+                
+            }
+            
+
+            
+            
+
+
+
         }
         else
         {
             Rb.gravityScale = 0;
+            coyoteGround = false;
+            CoyoteTimer = 0;
         }
 
 
