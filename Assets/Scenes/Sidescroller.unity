@@ -1567,6 +1567,7 @@ MonoBehaviour:
   FaceRight: 0
   ApexHeight: 4
   ApexTime: 0.5
+  terminalVelocity: 15
 --- !u!4 &1433354315
 Transform:
   m_ObjectHideFlags: 0

@@ -17,6 +17,7 @@ public class PlayerController : MonoBehaviour
     float initialYposition = 0;
     bool jump = false;
     bool towardGround = false;
+    public float terminalVelocity;
     public enum FacingDirection
     {
         left, right
@@ -123,7 +124,17 @@ public class PlayerController : MonoBehaviour
             float Gravity = -2 * ApexHeight / ((ApexTime) * (ApexTime));
             float JumpVelocity = 2 * ApexHeight / (ApexTime);
             //Rb.velocity = new Vector2(Rb.velocity.x, ((1 / 2) * Gravity * (GravityTime * GravityTime) + JumpVelocity * GravityTime + initialYposition));
-            Rb.velocity = new Vector2(Rb.velocity.x, (Gravity * GravityTime + JumpVelocity));
+            float VerticalChange = (Gravity * GravityTime + JumpVelocity);
+            if (VerticalChange < -terminalVelocity)
+            {
+                VerticalChange = -terminalVelocity;
+            }
+            else if (VerticalChange > terminalVelocity)
+            {
+                VerticalChange = terminalVelocity;
+            }
+            Rb.velocity = new Vector2(Rb.velocity.x, VerticalChange);
+            Debug.Log(VerticalChange);
             if (/*jump == true &&*/ (GravityTime >= ApexTime)) //Rb.velocity.y >= ApexHeight
             {
                 if (!IsGrounded())
