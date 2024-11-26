@@ -14,9 +14,7 @@ public class PlayerController : MonoBehaviour
     public float ApexHeight;
     public float ApexTime;
     float GravityTime = 0;
-    float initialYposition = 0;
     bool jump = false;
-    bool towardGround = false;
     public float terminalVelocity;
     public float CoyoteTimeValue = 0;
     float CoyoteTimer = 0;
@@ -79,61 +77,36 @@ public class PlayerController : MonoBehaviour
             TimeGone = 0;
             if (jump == true)
             {
-                MovementUpdate(playerInput);
+                MovementUpdate(playerInput); //if players aren't moving but want to jump this will help do so
             }
         }
         if ((!IsGrounded() || coyoteGround == true) && Input.GetButtonDown("Jump"))
         {
             Rb.gravityScale = 0;
-            initialYposition = transform.position.y;
-            jump = true;
             
-            /*float Gravity = -2 * ApexHeight / ((ApexTime) * (ApexTime));
-            //Debug.Log(Physics2D.gravity);
-            //Physics2D.gravity = new Vector2(0, Gravity);
-            float JumpVelocity = 2 * ApexHeight / (ApexTime);
-            //Rb.AddForce(Vector2.up * JumpForce, forceMode);
-            //Rb.velocity = new Vector2(Rb.velocity.x, (Gravity * Time.deltaTime) * Time.deltaTime + JumpVelocity);
-            if (Rb.velocity.y >= ApexHeight)
-            {
-                //GravityTime = 0;
-                Rb.gravityScale = 3;
-            }*/
+            jump = true;
 
         }
         
-        if (!IsGrounded())
+        if (IsGrounded() && jump == false)// is not grounded and not jumping AKA walking off a ledge
         {
-            //Rb.gravityScale= 3;
-            //jump = false;
-        }
-        else
-        {
-            //Rb.gravityScale = 0;
-        }
-        if (IsGrounded() && jump == false)
-        {
-            if (Input.GetAxis("Horizontal") == 0)
+            if (Input.GetAxis("Horizontal") == 0) //if player not touching keyboard or in jump state when off the ground
             {
-                MovementUpdate(playerInput);
+                MovementUpdate(playerInput); //move the player until they touch the ground
             }
         }
-
-        //Debug.Log(IsGrounded());
 
     }
 
     private void MovementUpdate(Vector2 playerInput)
     {
-        //Debug.Log(jump);
         Rb.velocity = new Vector2(playerInput.x, Rb.velocity.y);
 
-        if (jump == true || towardGround == true)//Rb.gravityScale <= 0)
+        if (jump == true)//Rb.gravityScale <= 0)
         {
             
             float Gravity = -2 * ApexHeight / ((ApexTime) * (ApexTime));
             float JumpVelocity = 2 * ApexHeight / (ApexTime);
-            //Rb.velocity = new Vector2(Rb.velocity.x, ((1 / 2) * Gravity * (GravityTime * GravityTime) + JumpVelocity * GravityTime + initialYposition));
             float VerticalChange = (Gravity * GravityTime + JumpVelocity);
             if (VerticalChange < -terminalVelocity)
             {
@@ -141,41 +114,29 @@ public class PlayerController : MonoBehaviour
             }
             /*else if (VerticalChange > terminalVelocity)
             {
-                VerticalChange = terminalVelocity;
+                VerticalChange = terminalVelocity; // applies terminal velocity to upward movement
             }*/
             Rb.velocity = new Vector2(Rb.velocity.x, VerticalChange);
             //Debug.Log(VerticalChange);
-            if (/*jump == true &&*/ (GravityTime >= ApexTime)) //Rb.velocity.y >= ApexHeight
+            if ((GravityTime >= ApexTime)) //Rb.velocity.y >= ApexHeight // either work as a "Shovel has reached the apex of jump"
             {
                 if (!IsGrounded())
                 {
                     GravityTime = 0;
-                    //Rb.gravityScale = 3;
-                    //Rb.gravityScale = 3f;
+                    //Rb.gravityScale = 3; // from ealier test when i was just using gravity scale (turned it off when jumping and applied it at apex so it could come back down
                     jump = false;
-                    //towardGround = true;
-                    //ApexHeight *= -1;
                 }
 
 
             }
             GravityTime += Time.deltaTime;
-            
-            /*if (towardGround == true && (GravityTime >= ApexTime)) //Rb.velocity.y >= ApexHeight
-            {
-                GravityTime = 0;
-                //Rb.gravityScale = 3;
-                //Rb.gravityScale = 3f;
-                //jump = false;
-                towardGround = false;
-                ApexHeight *= -1;
-            }*/
+
         }
-        else if (IsGrounded() && jump == false)
+        else if (IsGrounded() && jump == false) // is not grounded and not jumping AKA walking off a ledge
         {
-            if (Rb.gravityScale <= 0)
+            if (Rb.gravityScale <= 0) //gravity is off and in this code will continue to remain off until after coyote time
             {
-                Debug.Log("why");
+                //Debug.Log("why");
                 
 
                 if (CoyoteTimer < CoyoteTimeValue)
