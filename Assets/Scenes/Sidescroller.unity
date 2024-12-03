@@ -1711,6 +1711,8 @@ MonoBehaviour:
   maxSpeed: 5
   AccelerationTime: 0.25
   decelerationTime: 0.15
+  DashSpeed: 1
+  DashTimeSet: 0.4
   apexHeight: 3
   apexTime: 0.5
   groundCheckOffset: 0.5

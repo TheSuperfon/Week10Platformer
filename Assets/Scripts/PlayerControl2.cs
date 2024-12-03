@@ -29,6 +29,11 @@ public class PlayerControl2 : MonoBehaviour
     public float maxSpeed = 5f;
     public float AccelerationTime = 0.25f;
     public float decelerationTime = 0.15f;
+    public float DashSpeed = 2;
+    private bool IsDashing = false;
+    private float DashTimePast = 0;
+    public float DashTimeSet = 0.01f;
+    private bool dashTimer = false;
 
     [Header("vertical")]
     public float apexHeight = 3f;
@@ -64,18 +69,30 @@ public class PlayerControl2 : MonoBehaviour
 
         gravity = -2 * apexHeight / (apexTime * apexTime);
         initialJumpSpeed = 2 * apexHeight / apexTime;
+        IsDashing = false;
     }
 
     public void Update()
     {
         CheckForGround();
 
-
+        Debug.Log(velocity.x);
 
         Vector2 playerInput = new Vector2();
 
+        if(IsDashing == false)
+        {
+            playerInput.x += (Input.GetAxisRaw("Horizontal"));
+        }
+        else
+        {
+            //playerInput.x = 0;
+        }
 
-        playerInput.x = (Input.GetAxisRaw("Horizontal"));
+        
+
+        
+
 
 
         if (isDead == true)
@@ -111,6 +128,29 @@ public class PlayerControl2 : MonoBehaviour
 
         MovementUpdate(playerInput);
         JumpUpdate();
+
+        if (Input.GetKeyDown(KeyCode.Z) && !IsDashing)
+        {
+            IsDashing = true;
+            if (currentDirection == FacingDirection.left)
+            {
+                velocity.x = -initialJumpSpeed * DashSpeed;
+            }
+            if (currentDirection == FacingDirection.right)
+            {
+                velocity.x = initialJumpSpeed * DashSpeed;
+            }
+            //IsDashing = false;
+            //DashTimer();
+            dashTimer = true;
+        }
+
+        if (dashTimer)
+        {
+            DashTimerUpdate();
+        }
+
+
         body.velocity = velocity;
         
         if (!Isgrounded)
@@ -121,6 +161,24 @@ public class PlayerControl2 : MonoBehaviour
         {
             velocity.y = 0;
         }
+    }
+
+    private void DashTimerUpdate()
+    {
+        if (DashTimePast < DashTimeSet)
+        {
+            dashTimer = true;
+            DashTimePast += Time.deltaTime;
+
+        }
+        else
+        {
+            Debug.Log("oof");
+            IsDashing = false;
+            dashTimer = false;
+        }
+        
+
     }
 
     private void MovementUpdate(Vector2 playerInput)
@@ -134,25 +192,35 @@ public class PlayerControl2 : MonoBehaviour
         {
             currentDirection = FacingDirection.left;
         }
-        
-        if (playerInput.x != 0)
+
+
+        if (IsDashing == false)
         {
-            velocity.x += accelerationRate * playerInput.x * Time.deltaTime;
-            velocity.x = Mathf.Clamp(velocity.x, -maxSpeed, maxSpeed);
+            if (playerInput.x != 0)
+            {
+                velocity.x += accelerationRate * playerInput.x * Time.deltaTime;
+                velocity.x = Mathf.Clamp(velocity.x, -maxSpeed, maxSpeed);
+            }
+            else
+            {
+                if (velocity.x > 0)
+                {
+                    velocity.x -= decelerationRate * Time.deltaTime;
+                    velocity.x = Mathf.Max(velocity.x, 0);
+                }
+                else if (velocity.x < 0)
+                {
+                    velocity.x += decelerationRate * Time.deltaTime;
+                    velocity.x = Mathf.Min(velocity.x, 0);
+                }
+            }
         }
         else
         {
-            if (velocity.x > 0)
-            {
-                velocity.x -= decelerationRate * Time.deltaTime;
-                velocity.x = Mathf.Max(velocity.x, 0);
-            }
-            else if (velocity.x < 0)
-            {
-                velocity.x += decelerationRate * Time.deltaTime;
-                velocity.x = Mathf.Min(velocity.x, 0);
-            }
+            velocity.x = Mathf.Clamp(velocity.x, -12, 12);
         }
+
+        
 
     }
 
