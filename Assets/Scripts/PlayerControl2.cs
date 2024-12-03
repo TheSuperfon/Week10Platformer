@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.WindowsRuntime;
+using UnityEditor.PackageManager;
 using UnityEngine;
 
 
@@ -61,6 +63,17 @@ public class PlayerControl2 : MonoBehaviour
     private bool WallTouchleft = false;
     private bool CanWall = false;
 
+    public GameObject bulletPrefab;
+    public float BulletForce = 150f;
+
+
+    public Transform KnightBody;
+
+    Vector2 mousePos;
+    RaycastHit2D hitinfo;
+    Vector2 gunpos;
+    LineRenderer lineRenderer;
+
     public void Start()
     {
         body.gravityScale = 0;
@@ -70,13 +83,42 @@ public class PlayerControl2 : MonoBehaviour
         gravity = -2 * apexHeight / (apexTime * apexTime);
         initialJumpSpeed = 2 * apexHeight / apexTime;
         IsDashing = false;
+        lineRenderer = GetComponent<LineRenderer>();
+        lineRenderer.positionCount = 2;
+        
     }
 
     public void Update()
     {
         CheckForGround();
+        KnightBody = this.gameObject.transform.GetChild(0);
+        mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        //hitinfo = Physics2D.Linecast(new Vector2(KnightBody.position.x, KnightBody.position.y), mousePos);
+        hitinfo = Physics2D.Linecast(transform.position, mousePos, LayerMask.GetMask("ground"));
+        
 
-        Debug.Log(velocity.x);
+        if (hitinfo.collider != null)
+        {
+            //Debug.Log(hitinfo.point);
+            mousePos = hitinfo.point;
+
+        }
+            
+        lineRenderer.SetPosition(0, gunpos);
+        lineRenderer.SetPosition(1, mousePos);
+
+
+        Vector3 Gundirection = AimGun(mousePos);
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            //Debug.Log("left");
+            FireGun(Gundirection);
+        }
+
+        gunpos = transform.position;
+
+        //Debug.Log(velocity.x);
 
         Vector2 playerInput = new Vector2();
 
@@ -173,12 +215,34 @@ public class PlayerControl2 : MonoBehaviour
         }
         else
         {
-            Debug.Log("oof");
+            //Debug.Log("oof");
             IsDashing = false;
             dashTimer = false;
         }
         
 
+    }
+
+
+    //code assimilated from week 9 canonball practice and to be edited before assignment submission
+    private Vector3 AimGun(Vector3 target)
+    {
+        Vector3 direction = target - transform.position;
+        direction.z = 0;
+
+        //float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        //transform.rotation = Quaternion.Euler(new Vector3(0, 0, angle));
+
+        return direction;
+    }
+
+    //code assimilated from week 9 canonball practice
+    private void FireGun(Vector3 direction)
+    {
+        GameObject Bullet = Instantiate(bulletPrefab, transform.position, Quaternion.identity);
+        Rigidbody2D Bulletbody = Bullet.GetComponent<Rigidbody2D>();
+        Bulletbody.AddForce(direction.normalized * BulletForce);
+        body.AddForce(-direction.normalized * BulletForce);
     }
 
     private void MovementUpdate(Vector2 playerInput)
@@ -191,6 +255,17 @@ public class PlayerControl2 : MonoBehaviour
         else if (playerInput.x < 0) //when horizontal movement isn't 0 so actually moving (left)
         {
             currentDirection = FacingDirection.left;
+        }
+        else
+        {
+            if (mousePos.x > 0) //when horizontal movement isn't 0 so actually moving (right)
+            {
+                currentDirection = FacingDirection.right;
+            }
+            else if (mousePos.x < 0) //when horizontal movement isn't 0 so actually moving (left)
+            {
+                currentDirection = FacingDirection.left;
+            }
         }
 
 
