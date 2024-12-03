@@ -171,7 +171,7 @@ public class PlayerControl2 : MonoBehaviour
         MovementUpdate(playerInput);
         JumpUpdate();
 
-        if (Input.GetKeyDown(KeyCode.Z) && !IsDashing)
+        if (Input.GetMouseButtonDown(1) && !IsDashing)
         {
             IsDashing = true;
             if (currentDirection == FacingDirection.left)
@@ -218,6 +218,7 @@ public class PlayerControl2 : MonoBehaviour
             //Debug.Log("oof");
             IsDashing = false;
             dashTimer = false;
+            DashTimePast = 0;
         }
         
 
@@ -258,11 +259,11 @@ public class PlayerControl2 : MonoBehaviour
         }
         else
         {
-            if (mousePos.x > 0) //when horizontal movement isn't 0 so actually moving (right)
+            if (mousePos.x > transform.position.x) //when horizontal movement isn't 0 so actually moving (right)
             {
                 currentDirection = FacingDirection.right;
             }
-            else if (mousePos.x < 0) //when horizontal movement isn't 0 so actually moving (left)
+            else if (mousePos.x < transform.position.x) //when horizontal movement isn't 0 so actually moving (left)
             {
                 currentDirection = FacingDirection.left;
             }
