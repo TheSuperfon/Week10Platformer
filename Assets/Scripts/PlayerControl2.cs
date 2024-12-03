@@ -35,11 +35,13 @@ public class PlayerControl2 : MonoBehaviour
     public float apexTime = 0.5f;
     private float gravity;
     private float initialJumpSpeed;
+    private float initialJumpSpeedWall;
 
 
     [Header("Ground Checking")]
     public float groundCheckOffset = 0.5f;
     public Vector2 groundCheckSize = new(0.4f, 0.1f);
+    public Vector2 groundCheckSizeWall = new(0.4f, 0.1f);
     public LayerMask groundCheckMask;
 
     private Vector2 velocity;
@@ -49,6 +51,10 @@ public class PlayerControl2 : MonoBehaviour
 
     private bool Isgrounded = false;
     private bool isDead = false;
+
+    private bool WallTouchRight = false;
+    private bool WallTouchleft = false;
+    private bool CanWall = false;
 
     public void Start()
     {
@@ -154,8 +160,23 @@ public class PlayerControl2 : MonoBehaviour
     {
         if (Isgrounded && Input.GetButton("Jump"))
         {
+            CanWall = true;
             velocity.y = initialJumpSpeed;
             Isgrounded = false;
+        }
+        if ((WallTouchleft) && Input.GetButton("Jump") && !Isgrounded)
+        {
+            velocity.x = initialJumpSpeed;
+            velocity.y = initialJumpSpeed;
+            CanWall = false;
+            WallTouchleft = false;
+        }
+        if ((WallTouchRight) && Input.GetButton("Jump") && !Isgrounded)
+        {
+            velocity.x = -initialJumpSpeed;
+            velocity.y = initialJumpSpeed;
+            CanWall = false;
+            WallTouchRight = false;
         }
     }
 
@@ -163,6 +184,11 @@ public class PlayerControl2 : MonoBehaviour
     private void CheckForGround()
     {
         Isgrounded = Physics2D.OverlapBox(transform.position + Vector3.down * groundCheckOffset, groundCheckSize, 0, groundCheckMask);
+        if (CanWall)
+        {
+            WallTouchleft = Physics2D.OverlapBox(transform.position + Vector3.left * groundCheckOffset, groundCheckSizeWall, 0, groundCheckMask);
+            WallTouchRight = Physics2D.OverlapBox(transform.position + Vector3.right * groundCheckOffset, groundCheckSizeWall, 0, groundCheckMask);
+        }
 
     }
 
@@ -173,6 +199,8 @@ public class PlayerControl2 : MonoBehaviour
     public void OnDrawGizmos()
     {
         Gizmos.DrawWireCube(transform.position + Vector3.down * groundCheckOffset, groundCheckSize);
+        Gizmos.DrawWireCube(transform.position + Vector3.left * groundCheckOffset, groundCheckSizeWall);
+        Gizmos.DrawWireCube(transform.position + Vector3.right * groundCheckOffset, groundCheckSizeWall);
     }
 
     public bool IsWalking()

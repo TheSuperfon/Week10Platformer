@@ -6,8 +6,10 @@ public class PlayerVis2 : MonoBehaviour
     public SpriteRenderer bodyRenderer;
     public PlayerControl2 playerController;
     private readonly int IdleHash = Animator.StringToHash("Idle");
-    private readonly int WalkingHash = Animator.StringToHash("Walking");
-    private readonly int JumpingHash = Animator.StringToHash("Jumping");
+    //private readonly int WalkingHash = Animator.StringToHash("Walking");
+    private readonly int WalkingHash = Animator.StringToHash("IsWalking");
+    //private readonly int JumpingHash = Animator.StringToHash("Jumping");
+    private readonly int JumpingHash = Animator.StringToHash("IsGrounded");
     private readonly int DeadHash = Animator.StringToHash("Dead");
     void Update()
     {
@@ -15,6 +17,7 @@ public class PlayerVis2 : MonoBehaviour
 
         animator.SetBool(WalkingHash, playerController.IsWalking());
         animator.SetBool(JumpingHash, playerController.IsGrounded());
+
 
         switch (playerController.GetFacingDirection())
         {
