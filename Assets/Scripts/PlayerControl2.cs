@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices.WindowsRuntime;
+using TMPro;
 using UnityEditor.PackageManager;
 using UnityEngine;
 
@@ -31,7 +32,8 @@ public class PlayerControl2 : MonoBehaviour
     public float maxSpeed = 5f;
     public float AccelerationTime = 0.25f;
     public float decelerationTime = 0.15f;
-    public float DashSpeed = 2;
+    public float DashSpeed = 1; //one being applied to x velocity which changes depending on if being moved
+    float InitialDashSpeed = 1; //one that takes the dashspeed set in editor
     private bool IsDashing = false;
     private float DashTimePast = 0;
     public float DashTimeSet = 0.01f;
@@ -43,6 +45,13 @@ public class PlayerControl2 : MonoBehaviour
     private float gravity;
     private float initialJumpSpeed;
     private float initialJumpSpeedWall;
+    public float WallSlideSpeed = 4;
+    float UngroundedTime = 0;
+    public float TerminalVelocity = 0;
+    public float WallJumpLimit = 1; //how many times player can wall jump in a row
+    float WallJumpCount = 0; //current count of how many times in a row player has wall jumped
+    public TextMeshProUGUI WallJumpCountText;
+
 
 
     [Header("Ground Checking")]
@@ -50,6 +59,9 @@ public class PlayerControl2 : MonoBehaviour
     public Vector2 groundCheckSize = new(0.4f, 0.1f);
     public Vector2 groundCheckSizeWall = new(0.4f, 0.1f);
     public LayerMask groundCheckMask;
+    public float CoyoteTimeValue = 0;
+    float CoyoteTimer = 0;
+    bool coyoteGround = false;
 
     private Vector2 velocity;
 
@@ -80,16 +92,20 @@ public class PlayerControl2 : MonoBehaviour
         accelerationRate = maxSpeed / AccelerationTime;
         decelerationRate = maxSpeed / decelerationTime;
 
+        InitialDashSpeed = DashSpeed;
+
         gravity = -2 * apexHeight / (apexTime * apexTime);
         initialJumpSpeed = 2 * apexHeight / apexTime;
         IsDashing = false;
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.positionCount = 2;
-        
+
+        WallJumpCount = 0;
     }
 
     public void Update()
     {
+        WallJumpCountText.text = WallJumpCount.ToString(); 
         CheckForGround();
         KnightBody = this.gameObject.transform.GetChild(0);
         mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -182,8 +198,6 @@ public class PlayerControl2 : MonoBehaviour
             {
                 velocity.x = initialJumpSpeed * DashSpeed;
             }
-            //IsDashing = false;
-            //DashTimer();
             dashTimer = true;
         }
 
@@ -198,11 +212,42 @@ public class PlayerControl2 : MonoBehaviour
         if (!Isgrounded)
         {
             velocity.y += gravity * Time.deltaTime;
+            
+            if (UngroundedTime > apexTime)
+            {
+                if (velocity.y < -TerminalVelocity)
+                {
+                    velocity.y = -TerminalVelocity;
+                } 
+            }
+            else
+            {
+                UngroundedTime += Time.deltaTime;
+            }
         }
         if (Isgrounded)
         {
             velocity.y = 0;
+            UngroundedTime = 0;
+            WallJumpCount = 0;
         }
+
+        if ((WallTouchleft) && (velocity.x < -0.5))
+        {
+            gravity /= WallSlideSpeed;
+            velocity.y = 0;
+        }
+        else if ((WallTouchRight) && (velocity.x > 0.5))
+        {
+            gravity /= WallSlideSpeed;
+            velocity.y = 0;
+        }
+        else
+        {
+            gravity = -2 * apexHeight / (apexTime * apexTime);
+            
+        }
+
     }
 
     private void DashTimerUpdate()
@@ -215,7 +260,6 @@ public class PlayerControl2 : MonoBehaviour
         }
         else
         {
-            //Debug.Log("oof");
             IsDashing = false;
             dashTimer = false;
             DashTimePast = 0;
@@ -272,13 +316,15 @@ public class PlayerControl2 : MonoBehaviour
 
         if (IsDashing == false)
         {
-            if (playerInput.x != 0)
+            if (playerInput.x != 0) // if player not standing still
             {
                 velocity.x += accelerationRate * playerInput.x * Time.deltaTime;
                 velocity.x = Mathf.Clamp(velocity.x, -maxSpeed, maxSpeed);
+                DashSpeed = InitialDashSpeed;
             }
-            else
+            else // if player lets go of movement keys (causes deceleration) or is standing still (deceleration achieved and now does nothing)
             {
+                DashSpeed = InitialDashSpeed / 1.5f;
                 if (velocity.x > 0)
                 {
                     velocity.x -= decelerationRate * Time.deltaTime;
@@ -304,31 +350,39 @@ public class PlayerControl2 : MonoBehaviour
     {
         if (Isgrounded && Input.GetButton("Jump"))
         {
+            
             CanWall = true;
             velocity.y = initialJumpSpeed;
             Isgrounded = false;
         }
-        if ((WallTouchleft) && Input.GetButton("Jump") && !Isgrounded)
+        if ((WallTouchleft) && Input.GetButtonDown("Jump") && !Isgrounded)
         {
             velocity.x = initialJumpSpeed;
             velocity.y = initialJumpSpeed;
-            CanWall = false;
-            WallTouchleft = false;
+            WallJumpCount += 1;
+            
         }
-        if ((WallTouchRight) && Input.GetButton("Jump") && !Isgrounded)
+        if ((WallTouchRight) && Input.GetButtonDown("Jump") && !Isgrounded)
         {
             velocity.x = -initialJumpSpeed;
             velocity.y = initialJumpSpeed;
+            WallJumpCount += 1;
+
+        }
+        if (WallJumpCount >= WallJumpLimit)
+        {
             CanWall = false;
             WallTouchRight = false;
+            WallTouchleft = false;
         }
+
     }
 
 
     private void CheckForGround()
     {
         Isgrounded = Physics2D.OverlapBox(transform.position + Vector3.down * groundCheckOffset, groundCheckSize, 0, groundCheckMask);
-        if (CanWall)
+        if (CanWall) //checks if the side boxes that determine if knight can wall jump if overlapped with wall, only when Jump button is pressed
         {
             WallTouchleft = Physics2D.OverlapBox(transform.position + Vector3.left * groundCheckOffset, groundCheckSizeWall, 0, groundCheckMask);
             WallTouchRight = Physics2D.OverlapBox(transform.position + Vector3.right * groundCheckOffset, groundCheckSizeWall, 0, groundCheckMask);
@@ -340,7 +394,7 @@ public class PlayerControl2 : MonoBehaviour
     {
         Vector3 p1 = transform.position + Vector3.down * groundCheckOffset + new Vector3(groundCheckSize.x / 2, groundCheckSize.y / 2);
     }
-    public void OnDrawGizmos()
+    public void OnDrawGizmos() //just to visualize in the editor what the overlapboxes look like
     {
         Gizmos.DrawWireCube(transform.position + Vector3.down * groundCheckOffset, groundCheckSize);
         Gizmos.DrawWireCube(transform.position + Vector3.left * groundCheckOffset, groundCheckSizeWall);

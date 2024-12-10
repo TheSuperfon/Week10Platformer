@@ -16,6 +16,8 @@ public class CameraController2D : MonoBehaviour
     [SerializeField] private Vector2 offset;
     [SerializeField] private float smoothing = 5f;
 
+    private Vector3 shakeOffset = Vector3.zero;
+
 
     // Start is called before the first frame update
     void Start()
@@ -40,7 +42,12 @@ public class CameraController2D : MonoBehaviour
     // Update is called once per frame
     public void LateUpdate()
     {
-        Vector3 desiredPosition = target.position + new Vector3(offset.x, offset.y, transform.position.z);
+        if (Input.GetKeyDown(KeyCode.S))
+        {
+            Shake(2.5f, 3f);
+        }
+
+        Vector3 desiredPosition = target.position + new Vector3(offset.x, offset.y, transform.position.z) + shakeOffset;
         Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, 1 - Mathf.Exp(-smoothing * Time.deltaTime));
 
         smoothedPosition.x = Mathf.Clamp(smoothedPosition.x, leftBoundryLimit, rightBoundryLimit);
@@ -49,4 +56,25 @@ public class CameraController2D : MonoBehaviour
         transform.position = smoothedPosition;
 
     }
+
+
+    public void Shake(float intensity, float duration)
+    {
+        StartCoroutine(ShakeCoroutine(intensity, duration));
+    }
+
+
+    private IEnumerator ShakeCoroutine(float intensity, float duration)
+    {
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            shakeOffset = Random.insideUnitCircle * intensity;
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        shakeOffset = Vector3.zero;
+
+    }
+
 }
