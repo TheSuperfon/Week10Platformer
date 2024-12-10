@@ -2987,9 +2987,10 @@ MonoBehaviour:
   groundCheckMask:
     serializedVersion: 2
     m_Bits: 64
-  CoyoteTimeValue: 0
+  CoyoteTimeValue: 0.15
   bulletPrefab: {fileID: 2865363425913174048, guid: 2790913ed9485ba43b16289c8c7e8eb6, type: 3}
-  BulletForce: 1000
+  BulletForce: 10
+  shootTimeSet: 0.3
   KnightBody: {fileID: 1433354315}
 --- !u!120 &1433354320
 LineRenderer:

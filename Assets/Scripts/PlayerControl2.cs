@@ -38,6 +38,9 @@ public class PlayerControl2 : MonoBehaviour
     private float DashTimePast = 0;
     public float DashTimeSet = 0.01f;
     private bool dashTimer = false;
+    private Vector2 velocity;
+    private float accelerationRate;
+    private float decelerationRate;
 
     [Header("vertical")]
     public float apexHeight = 3f;
@@ -50,8 +53,10 @@ public class PlayerControl2 : MonoBehaviour
     public float TerminalVelocity = 0;
     public float WallJumpLimit = 1; //how many times player can wall jump in a row
     float WallJumpCount = 0; //current count of how many times in a row player has wall jumped
-    public TextMeshProUGUI WallJumpCountText;
-
+    public TextMeshProUGUI WallJumpCountText; //The text that will appear telling player how many times they wall jumped
+    private bool WallTouchRight = false;
+    private bool WallTouchleft = false;
+    private bool CanWall = false;
 
 
     [Header("Ground Checking")]
@@ -62,22 +67,20 @@ public class PlayerControl2 : MonoBehaviour
     public float CoyoteTimeValue = 0;
     float CoyoteTimer = 0;
     bool coyoteGround = false;
-
-    private Vector2 velocity;
-
-    private float accelerationRate;
-    private float decelerationRate;
+    
+    
 
     private bool Isgrounded = false;
     private bool isDead = false;
 
-    private bool WallTouchRight = false;
-    private bool WallTouchleft = false;
-    private bool CanWall = false;
 
+    [Header("Gun")]
     public GameObject bulletPrefab;
     public float BulletForce = 150f;
-
+    bool shooting = false;
+    public float shootTimeSet = 0.2f;
+    float shootTimePast;
+    bool shootTimer;
 
     public Transform KnightBody;
 
@@ -100,6 +103,9 @@ public class PlayerControl2 : MonoBehaviour
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.positionCount = 2;
 
+        shooting = false;
+        shootTimer = false;
+
         WallJumpCount = 0;
     }
 
@@ -107,32 +113,32 @@ public class PlayerControl2 : MonoBehaviour
     {
         WallJumpCountText.text = WallJumpCount.ToString(); 
         CheckForGround();
-        KnightBody = this.gameObject.transform.GetChild(0);
+        //KnightBody = this.gameObject.transform.GetChild(0);
         mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         //hitinfo = Physics2D.Linecast(new Vector2(KnightBody.position.x, KnightBody.position.y), mousePos);
         hitinfo = Physics2D.Linecast(transform.position, mousePos, LayerMask.GetMask("ground"));
         
 
-        if (hitinfo.collider != null)
+        if (hitinfo.collider != null) //if the linecast touches a collider
         {
             //Debug.Log(hitinfo.point);
-            mousePos = hitinfo.point;
+            mousePos = hitinfo.point; //end of the linecast goes to that collision in front of mouse instead of the actual mouse position
 
         }
             
         lineRenderer.SetPosition(0, gunpos);
         lineRenderer.SetPosition(1, mousePos);
-
+        gunpos = transform.position;
 
         Vector3 Gundirection = AimGun(mousePos);
 
         if (Input.GetMouseButtonDown(0))
         {
-            //Debug.Log("left");
+            shootTimer = true;
             FireGun(Gundirection);
         }
 
-        gunpos = transform.position;
+        
 
         //Debug.Log(velocity.x);
 
@@ -206,12 +212,40 @@ public class PlayerControl2 : MonoBehaviour
             DashTimerUpdate();
         }
 
-
-        body.velocity = velocity;
-        
-        if (!Isgrounded)
+        if (shootTimer)
         {
-            velocity.y += gravity * Time.deltaTime;
+            ShootingUpdate();
+        }
+
+
+        if (!shooting) // if not shooting
+        {
+            body.velocity = velocity; //velocity can be updated
+        }
+        
+        
+        if (!Isgrounded) //if not on the ground
+        {
+            if (velocity.y == 0)
+            {
+                if (CoyoteTimer < CoyoteTimeValue)
+                {
+                    coyoteGround = true;
+                    CoyoteTimer += Time.deltaTime;
+
+                }
+                else
+                {
+                    velocity.y += gravity * Time.deltaTime;
+                    CoyoteTimer = 0;
+                    coyoteGround = false;
+                }
+            }
+            else
+            {
+                velocity.y += gravity * Time.deltaTime;
+            }
+            
             
             if (UngroundedTime > apexTime)
             {
@@ -232,12 +266,12 @@ public class PlayerControl2 : MonoBehaviour
             WallJumpCount = 0;
         }
 
-        if ((WallTouchleft) && (velocity.x < -0.5))
+        if ((WallTouchleft) && (velocity.x < -0.5)) //if pressing against a wall on the left
         {
             gravity /= WallSlideSpeed;
             velocity.y = 0;
         }
-        else if ((WallTouchRight) && (velocity.x > 0.5))
+        else if ((WallTouchRight) && (velocity.x > 0.5)) //if pressing against a wall on the right
         {
             gravity /= WallSlideSpeed;
             velocity.y = 0;
@@ -269,14 +303,13 @@ public class PlayerControl2 : MonoBehaviour
     }
 
 
-    //code assimilated from week 9 canonball practice and to be edited before assignment submission
+    //code assimilated from week 9 canonball practice 
     private Vector3 AimGun(Vector3 target)
     {
         Vector3 direction = target - transform.position;
         direction.z = 0;
 
-        //float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        //transform.rotation = Quaternion.Euler(new Vector3(0, 0, angle));
+        
 
         return direction;
     }
@@ -284,10 +317,33 @@ public class PlayerControl2 : MonoBehaviour
     //code assimilated from week 9 canonball practice
     private void FireGun(Vector3 direction)
     {
+        
         GameObject Bullet = Instantiate(bulletPrefab, transform.position, Quaternion.identity);
         Rigidbody2D Bulletbody = Bullet.GetComponent<Rigidbody2D>();
-        Bulletbody.AddForce(direction.normalized * BulletForce);
-        body.AddForce(-direction.normalized * BulletForce);
+        Bulletbody.AddForce(direction.normalized * BulletForce, ForceMode2D.Impulse);
+        body.AddForce(-direction.normalized * BulletForce, ForceMode2D.Impulse);
+        
+
+
+
+    }
+
+    private void ShootingUpdate()
+    {
+        if (shootTimePast < shootTimeSet)
+        {
+
+            shooting = true;
+            shootTimePast += Time.deltaTime;
+            
+        }
+        else
+        {
+            shooting = false;
+            
+            shootTimePast = 0;
+            shootTimer = false;
+        }
     }
 
     private void MovementUpdate(Vector2 playerInput)
@@ -348,12 +404,13 @@ public class PlayerControl2 : MonoBehaviour
 
     private void JumpUpdate()
     {
-        if (Isgrounded && Input.GetButton("Jump"))
+        if ((Isgrounded || coyoteGround) && Input.GetButton("Jump"))
         {
             
             CanWall = true;
             velocity.y = initialJumpSpeed;
             Isgrounded = false;
+            coyoteGround = false;
         }
         if ((WallTouchleft) && Input.GetButtonDown("Jump") && !Isgrounded)
         {
